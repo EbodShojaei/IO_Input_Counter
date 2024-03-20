@@ -2,12 +2,14 @@
 # include <stdlib.h>
 # include <string.h>
 
+# define ASCII_SIZE 128 // ASCII character set size
 # define HASH_SIZE 11 // Prime number for hash table size
 # define HASH_MAGIC 37 // Magic number for hash function
 # define HASH_LOAD_FACTOR 0.75 // Load factor for hash table
 # define HASH_GROWTH_FACTOR 2 // Factor to grow hash table by
-# define MAX_STRING_SIZE 32 // Max size of a string
+# define MAX_STRING_SIZE 64 // Max size of a string
 # define MIN_STRING_SIZE 1 // Min size of a string
+
 
 /**
  * A string and the number of times it has been seen.
@@ -29,10 +31,47 @@ typedef struct {
 
 
 /**
- * Handles errors to stderr. 
+ * Handles errors to stderr.
+ * @param message The error message to print.
+ * @return void
  */
 void handleError(char *message) {
 	if (message) fprintf(stderr, "%s\n", message);
+}
+
+
+/**
+ * Build look-up table for illegal chars.
+ * Each element is a char, and the value is the index of the char in the string.
+ * @param illegal The string of illegal characters.
+ * @return The look-up table or NULL if memory could not be allocated
+ */
+int *createLookupTable(const unsigned char *illegal) {
+	int *lookup = (int *)calloc(ASCII_SIZE, sizeof(int));
+	if (!lookup) {
+		handleError("Error: Could not allocate memory for look-up table.");
+		return NULL;
+	}
+	for (int i = 0; i <= sizeof(illegal); i++) {
+		lookup[(unsigned char) illegal[i]] = 1; // Marked as illegal char
+	}
+	return lookup;
+}
+
+
+/**
+ * Frees the memory of a look-up table.
+ * @param lookup The look-up table to free.
+ * @return void
+ */
+int freeLookupTable(int *lookup) {
+	if (lookup) {
+		free(lookup);
+		return 0;
+	} else {
+		handleError("Error: Null look-up table.");
+		return -1;
+	}
 }
 
 
@@ -220,6 +259,20 @@ void addString(HashTable *ht, char *str) {
 }
 
 
+int fileReader(char *filename) {
+	FILE *file = fopen(filename, "r");
+	if (!file) {
+		handleError("Error: Could not open file.");
+		return -1;
+	}
+
+	int word_count = 0;
+	char *word = (char *)malloc(MAX_STRING_SIZE * sizeof(char));
+	return 0;
+}
+
+
+
 /**
  * Driver function.
  */
@@ -265,6 +318,24 @@ int main(int argc, char *argv[]) {
 
 	// Print the current size of the hash table
 	printf("Current size of the hash table: %d\n", ht->size);
+
+	// Free the hash table
+	freeHashTable(ht);
+	printf("Hash table status: %d\n", ht->size);
+
+	const unsigned char COMMON_PUNCTUATION[] = {',', '*', ';', '.', ':', '(', '[', ']', ')'};
+	int *lookup = createLookupTable(COMMON_PUNCTUATION);
+	printf("Lookup table status: %d\n", lookup[',']);
+
+	// Print the look-up table
+	for (int i = 0; i < ASCII_SIZE; i++) {
+		if (lookup[i] != 0) {
+			printf("Illegal char: %c\n", i);
+		}
+	}
+	freeLookupTable(lookup);
+	printf("Lookup table status: %d\n", lookup[',']);
+
 
 	return 0;
 }
